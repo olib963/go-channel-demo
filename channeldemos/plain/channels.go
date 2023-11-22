@@ -21,13 +21,13 @@ func main() {
 		// This will block until the receiver is ready to receive the message.
 		channel <- "Hello World!"
 		println("Sent to channel.")
-		time.Sleep(30 * time.Second)
+		time.Sleep(25 * time.Second)
 		println("Sending to channel again...")
 		channel <- "Goodbye World!"
 		println("Sent to channel again.")
 	}()
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(10 * time.Second)
 	println("Receiving from channel...")
 	println("Received from channel: " + <-channel)
 	println("Receiving from channel again...")
