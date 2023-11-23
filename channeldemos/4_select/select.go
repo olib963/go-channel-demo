@@ -9,7 +9,7 @@ import (
 )
 
 /*
-A small demo of using select to read from multiple channels.
+A demo of using select to read from multiple channels.
 */
 func main() {
 	greetings := make(chan string, 1)

@@ -6,14 +6,16 @@ import (
 )
 
 func main() {
-	initialURL, err := url.Parse("https://monzo.com")
+	initialURL, err := url.Parse("https://monzo.com/")
 	if err != nil {
 		panic(err)
 	}
 
 	mainActor := actor.NewDefinition(func(start Start) {
 		u := url.URL(start)
-		println(u.String())
+		worker := actor.NewDefinition(ParseHTML)
+		agg := actor.NewDefinition(aggregator(u, worker))
+		agg.Await()
 	})
 
 	mainActor.Send(Start(*initialURL))
