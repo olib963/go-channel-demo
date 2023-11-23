@@ -9,10 +9,12 @@ import (
 func main() {
 	actor.NewSystem(Crawler).
 		WithTimeout(5 * time.Minute).
-		Start()
+		Start().
+		AwaitTermination()
 }
 
 func Crawler(initialContext actor.Context[struct{}]) {
+
 	initialURL := url.URL{
 		Scheme: "https",
 		Host:   "monzo.com",
@@ -21,6 +23,7 @@ func Crawler(initialContext actor.Context[struct{}]) {
 
 	workerDefinition := ParseHTML
 	pool := actor.NewPool(workerDefinition, 10)
-	agg := actor.FromDefinition(aggregator(initialURL, pool))
-	pool.Send(Parse{initialURL, agg})
+	workers := actor.Spawn(initialContext, pool)
+	agg := actor.Spawn(initialContext, aggregator(initialURL, workers))
+	workers.Send(Parse{initialURL, agg})
 }
