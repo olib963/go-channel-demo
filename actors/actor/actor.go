@@ -17,15 +17,19 @@ func Spawn[Message any](ctx Context, name string, definition Definition[Message]
 
 	slog.Info("Spawned actor", "name", name)
 
+	ctx.actorGroup().Add(1)
+
 	internalCtx, cancel := context.WithCancel(ctx.Context())
 
 	a := actor[Message]{messages, cancel}
 	newContext := actorContext[Message]{
 		self:        a,
 		internalCtx: internalCtx,
+		actors:      ctx.actorGroup(),
 	}
 
 	go func() {
+		defer ctx.actorGroup().Done()
 		for {
 			select {
 			// Await termination.

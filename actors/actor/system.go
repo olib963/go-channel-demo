@@ -3,6 +3,7 @@ package actor
 import (
 	"context"
 	"log/slog"
+	"sync"
 	"time"
 )
 
@@ -17,23 +18,30 @@ type RunningSystem interface {
 }
 
 type system struct {
-	setup  func(ctx Context)
-	ctx    context.Context
-	cancel context.CancelFunc
+	setup   func(ctx Context)
+	ctx     context.Context
+	cancel  context.CancelFunc
+	stopped chan struct{}
 }
 
 func (s system) WithTimeout(timeout time.Duration) System {
 	newContext, cancel := context.WithTimeout(s.ctx, timeout)
-	return system{s.setup, newContext, cancel}
+	return system{s.setup, newContext, cancel, s.stopped}
 }
 
 func (s system) Start() RunningSystem {
 	slog.Info("Starting actor system")
 	initialContext := actorContext[struct{}]{
 		internalCtx: s.ctx,
+		actors:      &sync.WaitGroup{},
 	}
-	// TODO shutdown system when all actors stop
 	s.setup(initialContext)
+
+	go func() {
+		initialContext.actors.Wait()
+		slog.Info("All actors stopped, terminating actor system")
+		s.StopNow()
+	}()
 	return s
 }
 
@@ -48,5 +56,5 @@ func (s system) AwaitTermination() {
 
 func NewSystem(setup func(ctx Context)) System {
 	ctx, cancel := context.WithCancel(context.Background())
-	return system{setup, ctx, cancel}
+	return system{setup, ctx, cancel, make(chan struct{})}
 }
