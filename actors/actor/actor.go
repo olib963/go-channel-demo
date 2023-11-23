@@ -1,19 +1,25 @@
 package actor
 
-import "context"
+import (
+	"context"
+	"log/slog"
+)
 
 type Actor[Message any] interface {
 	Send(Message)
+	Stop()
 }
 
 type Definition[Message any] func(ActorContext[Message], Message) Behaviour
 
-func Spawn[Message any](ctx Context, fn Definition[Message]) Actor[Message] {
+func Spawn[Message any](ctx Context, name string, definition Definition[Message]) Actor[Message] {
 	messages := make(chan Message)
 
-	a := actor[Message]{messages}
+	slog.Info("Spawned actor", "name", name)
 
 	internalCtx, cancel := context.WithCancel(ctx.Context())
+
+	a := actor[Message]{messages, cancel}
 	newContext := actorContext[Message]{
 		self:        a,
 		internalCtx: internalCtx,
@@ -24,19 +30,22 @@ func Spawn[Message any](ctx Context, fn Definition[Message]) Actor[Message] {
 			select {
 			// Await termination.
 			case <-newContext.Context().Done():
+				slog.Info("Terminated actor", "name", name)
 				return
 			case message := <-messages:
-				b := fn(newContext, message)
+				b := definition(newContext, message)
 				switch b := b.(type) {
 				case stop:
+					slog.Info("Stopping actor", "name", name)
 					cancel()
 				case failed:
+					slog.Error("Actor failed", "name", name, "error", b.err)
 					// TODO propagate error up Context chain.
 					panic(b.err)
 				case same:
 					// Keep processing.
 				default:
-					panic("unknown behaviour")
+					panic("unknown behaviour. This is a bug in the actor library")
 				}
 			}
 		}
@@ -46,6 +55,7 @@ func Spawn[Message any](ctx Context, fn Definition[Message]) Actor[Message] {
 
 type actor[Message any] struct {
 	messages chan Message
+	stop     context.CancelFunc
 }
 
 func (a actor[Message]) Send(message Message) {
@@ -58,3 +68,5 @@ func (a actor[Message]) Send(message Message) {
 		a.messages <- message
 	}()
 }
+
+func (a actor[Message]) Stop() { a.stop() }

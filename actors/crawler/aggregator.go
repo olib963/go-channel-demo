@@ -46,6 +46,7 @@ func aggregator(initialLink url.URL, worker actor.Actor[Parse]) actor.Definition
 			"processed", len(processed),
 			"initial_link", initialLink.String(),
 		)
+		worker.Stop()
 		return actor.Stop()
 
 	}

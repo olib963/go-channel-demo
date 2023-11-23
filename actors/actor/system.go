@@ -2,6 +2,7 @@ package actor
 
 import (
 	"context"
+	"log/slog"
 	"time"
 )
 
@@ -27,9 +28,12 @@ func (s system) WithTimeout(timeout time.Duration) System {
 }
 
 func (s system) Start() RunningSystem {
-	s.setup(actorContext[struct{}]{
+	slog.Info("Starting actor system")
+	initialContext := actorContext[struct{}]{
 		internalCtx: s.ctx,
-	})
+	}
+	// TODO shutdown system when all actors stop
+	s.setup(initialContext)
 	return s
 }
 
@@ -39,6 +43,7 @@ func (s system) StopNow() {
 
 func (s system) AwaitTermination() {
 	<-s.ctx.Done()
+	slog.Info("Actor system terminated")
 }
 
 func NewSystem(setup func(ctx Context)) System {

@@ -1,14 +1,18 @@
 package actor
 
-import "sync"
+import (
+	"strconv"
+	"sync"
+)
 
-func NewPool[Message any](worker Definition[Message], size int) Definition[Message] {
+func NewPool[Message any](worker Definition[Message], poolName string, size int) Definition[Message] {
 	once := sync.Once{}
 	workers := make(chan Actor[Message], size)
 	return func(ctx ActorContext[Message], message Message) Behaviour {
 		once.Do(func() {
 			for i := 0; i < size; i++ {
-				workers <- Spawn(ctx, worker)
+				name := poolName + "-" + strconv.Itoa(i)
+				workers <- Spawn(ctx, name, worker)
 			}
 		})
 		worker := <-workers

@@ -1,6 +1,8 @@
 package actor
 
-import "context"
+import (
+	"context"
+)
 
 type Context interface {
 	Context() context.Context
@@ -18,6 +20,4 @@ type actorContext[Message any] struct {
 
 func (c actorContext[Message]) Self() Actor[Message] { return c.self }
 
-func (c actorContext[Message]) Context() context.Context {
-	return c.internalCtx
-}
+func (c actorContext[Message]) Context() context.Context { return c.internalCtx }
