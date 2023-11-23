@@ -1,0 +1,4 @@
+= Go Channel Demos
+
+A repo for an engineering talk on how Go Channels work. With a little bit of
+https://en.wikipedia.org/wiki/Actor_model[Actor Model] thrown in for good measure.
