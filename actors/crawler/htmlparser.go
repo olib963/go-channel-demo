@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/olib963/go-channel-demo/actors/actor"
+	"github.com/olib963/go-channel-demo/actors/set"
 	"golang.org/x/net/html"
 	"log/slog"
 	"net/http"
@@ -20,37 +22,35 @@ type Parse struct {
 
 type Parsed struct {
 	Path string
-	Urls set[url.URL]
+	Urls set.Set[url.URL]
 }
 
-func ParseHTML(_ actor.Context[Parse], toParse Parse) {
+func ParseHTML(_ actor.Context[Parse], toParse Parse) actor.Behaviour {
 	response, err := http.Get(toParse.Url.String())
 	if err != nil {
-		slog.Info("Error fetching %s: %s", toParse.Url.String(), err.Error())
-		return
+		return actor.Failed(fmt.Errorf("fetching %s: %w", toParse.Url.String(), err))
 	}
 
 	parsed, err := html.Parse(response.Body)
 	if err != nil {
-		slog.Info("Error parsing %s: %s", toParse.Url.String(), err.Error())
-		return
+		return actor.Failed(fmt.Errorf("parsing the html of %s: %w", toParse.Url.String(), err))
 	}
 
-	links := make(set[url.URL], 0)
+	links := set.Set[url.URL]{}
 	for _, anchor := range allAnchors(parsed) {
 		href, exists := findHref(anchor)
 		if !exists {
-			slog.Warn("Anchor has no href", anchor)
 			continue
 		}
 		url, err := url.Parse(href)
 		if err != nil {
-			slog.Warn("Error parsing URL", href, err)
+			slog.Warn("Error parsing URL", "href", href, "err", err)
 			continue
 		}
 		links[*url] = struct{}{}
 	}
 	toParse.Reply.Send(Parsed{toParse.Url.Path, links})
+	return actor.Same()
 }
 
 func allAnchors(node *html.Node) []*html.Node {

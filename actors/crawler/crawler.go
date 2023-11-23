@@ -24,6 +24,7 @@ func Crawler(initialContext actor.Context[struct{}]) {
 	workerDefinition := ParseHTML
 	pool := actor.NewPool(workerDefinition, 10)
 	workers := actor.Spawn(initialContext, pool)
+	// TODO better state management, definition should encapsulate state
 	agg := actor.Spawn(initialContext, aggregator(initialURL, workers))
 	workers.Send(Parse{initialURL, agg})
 }
