@@ -6,11 +6,11 @@ import (
 	"net/url"
 )
 
-func aggregator(initialLink url.URL, worker actor.Actor[Parse]) func(Parsed) {
+func aggregator(initialLink url.URL, worker actor.Actor[Parse]) actor.Definition[Parsed] {
 	inFlight := set[string]{initialLink.Path: struct{}{}}
 	processed := make(map[string]set[url.URL])
 
-	return func(parsed Parsed) {
+	return func(ctx actor.Context[Parsed], parsed Parsed) {
 		processed[parsed.Path] = parsed.Urls
 		delete(inFlight, parsed.Path)
 
@@ -28,10 +28,14 @@ func aggregator(initialLink url.URL, worker actor.Actor[Parse]) func(Parsed) {
 				continue
 			}
 
+			link.Scheme = initialLink.Scheme
+
 			inFlight[link.Path] = struct{}{}
-			worker.Send(Parse{link, ctx.self})
+			slog.Info("Crawling %s", link.String())
+			worker.Send(Parse{link, ctx.Self()})
 		}
 		if len(inFlight) == 0 {
+			// TODO respond
 			slog.Info("Finished crawling")
 		}
 	}

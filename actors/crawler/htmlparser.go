@@ -23,7 +23,7 @@ type Parsed struct {
 	Urls set[url.URL]
 }
 
-func ParseHTML(toParse Parse) {
+func ParseHTML(_ actor.Context[Parse], toParse Parse) {
 	response, err := http.Get(toParse.Url.String())
 	if err != nil {
 		slog.Info("Error fetching %s: %s", toParse.Url.String(), err.Error())
@@ -36,7 +36,7 @@ func ParseHTML(toParse Parse) {
 		return
 	}
 
-	links := make([]url.URL, 0)
+	links := make(set[url.URL], 0)
 	for _, anchor := range allAnchors(parsed) {
 		href, exists := findHref(anchor)
 		if !exists {
@@ -48,9 +48,9 @@ func ParseHTML(toParse Parse) {
 			slog.Warn("Error parsing URL", href, err)
 			continue
 		}
-		links = append(links, *url)
+		links[*url] = struct{}{}
 	}
-	slog.Info("Found links", links)
+	toParse.Reply.Send(Parsed{toParse.Url.Path, links})
 }
 
 func allAnchors(node *html.Node) []*html.Node {

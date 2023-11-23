@@ -3,22 +3,24 @@ package main
 import (
 	"github.com/olib963/go-channel-demo/actors/actor"
 	"net/url"
+	"time"
 )
 
 func main() {
-	initialURL, err := url.Parse("https://monzo.com/")
-	if err != nil {
-		panic(err)
-	}
-
-	mainActor := actor.NewDefinition(func(start Start) {
-		u := url.URL(start)
-		worker := actor.NewDefinition(ParseHTML)
-		agg := actor.NewDefinition(aggregator(u, worker))
-		agg.Await()
-	})
-
-	mainActor.Send(Start(*initialURL))
+	actor.NewSystem(Crawler).
+		WithTimeout(5 * time.Minute).
+		Start()
 }
 
-type Start url.URL
+func Crawler(initialContext actor.Context[struct{}]) {
+	initialURL := url.URL{
+		Scheme: "https",
+		Host:   "monzo.com",
+		Path:   "/",
+	}
+
+	workerDefinition := ParseHTML
+	pool := actor.NewPool(workerDefinition, 10)
+	agg := actor.FromDefinition(aggregator(initialURL, pool))
+	pool.Send(Parse{initialURL, agg})
+}

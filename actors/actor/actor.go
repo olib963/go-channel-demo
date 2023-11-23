@@ -4,12 +4,16 @@ type Actor[Message any] interface {
 	Send(Message)
 }
 
-func NewDefinition[Message any](fn func(Message)) Actor[Message] {
+type Definition[Message any] func(Context[Message], Message) // TODO return behaviour.
+
+// TODO _spawn_ on Context
+func FromDefinition[Message any](fn Definition[Message]) Actor[Message] {
 	return actor[Message](fn)
 }
 
-type actor[Message any] func(Message)
+type actor[Message any] func(Context[Message], Message)
 
 func (a actor[Message]) Send(message Message) {
-	a(message)
+	context := actorContext[Message]{self: a}
+	a(context, message)
 }
