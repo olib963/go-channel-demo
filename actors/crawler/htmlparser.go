@@ -25,8 +25,15 @@ type Parsed struct {
 	Urls set.Set[url.URL]
 }
 
-func ParseHTML(_ actor.Context[Parse], toParse Parse) actor.Behaviour {
-	response, err := http.Get(toParse.Url.String())
+func ParseHTML(ctx actor.ActorContext[Parse], toParse Parse) actor.Behaviour {
+	client := http.Client{}
+
+	request, err := http.NewRequestWithContext(ctx.Context(), http.MethodGet, toParse.Url.String(), nil)
+	if err != nil {
+		return actor.Failed(fmt.Errorf("creating request for %s: %w", toParse.Url.String(), err))
+	}
+
+	response, err := client.Do(request)
 	if err != nil {
 		return actor.Failed(fmt.Errorf("fetching %s: %w", toParse.Url.String(), err))
 	}

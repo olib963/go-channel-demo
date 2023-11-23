@@ -13,7 +13,7 @@ func aggregator(initialLink url.URL, worker actor.Actor[Parse]) actor.Definition
 	inFlight := set.Of(initialLink.Path)
 	processed := make(map[Path]set.Set[url.URL])
 
-	return func(ctx actor.Context[Parsed], parsed Parsed) actor.Behaviour {
+	return func(ctx actor.ActorContext[Parsed], parsed Parsed) actor.Behaviour {
 		processed[parsed.Path] = parsed.Urls
 		inFlight.Remove(parsed.Path)
 

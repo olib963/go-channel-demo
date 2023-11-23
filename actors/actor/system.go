@@ -16,7 +16,7 @@ type RunningSystem interface {
 }
 
 type system struct {
-	setup  func(ctx Context[struct{}])
+	setup  func(ctx Context)
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -27,11 +27,9 @@ func (s system) WithTimeout(timeout time.Duration) System {
 }
 
 func (s system) Start() RunningSystem {
-	initialActorContext := actorContext[struct{}]{
-		self:        devnull{},
+	s.setup(actorContext[struct{}]{
 		internalCtx: s.ctx,
-	}
-	s.setup(initialActorContext)
+	})
 	return s
 }
 
@@ -43,11 +41,7 @@ func (s system) AwaitTermination() {
 	<-s.ctx.Done()
 }
 
-func NewSystem(setup func(ctx Context[struct{}])) System {
+func NewSystem(setup func(ctx Context)) System {
 	ctx, cancel := context.WithCancel(context.Background())
 	return system{setup, ctx, cancel}
 }
-
-type devnull struct{}
-
-func (i devnull) Send(message struct{}) {}

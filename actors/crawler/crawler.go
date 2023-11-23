@@ -13,8 +13,7 @@ func main() {
 		AwaitTermination()
 }
 
-func Crawler(initialContext actor.Context[struct{}]) {
-
+func Crawler(initialContext actor.Context) {
 	initialURL := url.URL{
 		Scheme: "https",
 		Host:   "monzo.com",

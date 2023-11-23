@@ -8,17 +8,13 @@ type stop struct{}
 
 func (s stop) isBehaviour() {}
 
-func Stop() Behaviour {
-	return stop{}
-}
+func Stop() Behaviour { return stop{} }
 
 type same struct{}
 
 func (s same) isBehaviour() {}
 
-func Same() Behaviour {
-	return same{}
-}
+func Same() Behaviour { return same{} }
 
 type failed struct {
 	err error
@@ -26,6 +22,4 @@ type failed struct {
 
 func (f failed) isBehaviour() {}
 
-func Failed(err error) Behaviour {
-	return failed{err}
-}
+func Failed(err error) Behaviour { return failed{err} }
