@@ -2,3 +2,7 @@
 
 A repo for an engineering talk on how Go Channels work. With a little bit of
 https://en.wikipedia.org/wiki/Actor_model[Actor Model] thrown in for good measure.
+
+The actor implementation has been implemented in a couple of different ways:
+- Using a custom framework I came up with quickly
+- Using an https://github.com/vladopajic/go-actor[actor framework] I found after I wrote the quick demo.
