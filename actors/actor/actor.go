@@ -44,7 +44,6 @@ func Spawn[Message any](ctx Context, name string, definition Definition[Message]
 					cancel()
 				case failed:
 					slog.Error("Actor failed", "name", name, "error", b.err)
-					// TODO propagate error up Context chain.
 					panic(b.err)
 				case same:
 					// Keep processing.

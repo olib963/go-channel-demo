@@ -29,7 +29,17 @@ func main() {
 
 	toStop := actor.Combine(aggregatorDefinition.MailBox, workerMailbox, worker).Build()
 
-	aggregator := actor.New(aggregatorDefinition, actor.OptOnStop(toStop.Stop))
+	aggregator := actor.New(
+		aggregatorDefinition,
+		actor.OptOnStop(toStop.Stop),
+		actor.OptOnStart(func(ctx context.Context) {
+			// Start the aggregator
+			err := workerMailbox.Send(ctx, Parse{initialURL, aggregatorDefinition.MailBox})
+			if err != nil {
+				panic(err)
+			}
+		}),
+	)
 
 	a := actor.Combine(aggregator, toStop).
 		WithOptions(
@@ -40,12 +50,6 @@ func main() {
 	a.Start()
 	// Stop the system if the context is done before the timeout
 	defer a.Stop()
-
-	// TODO gotta be a better way.
-	err := workerMailbox.Send(ctx, Parse{initialURL, aggregatorDefinition.MailBox})
-	if err != nil {
-		panic(err)
-	}
 
 	<-ctx.Done()
 
