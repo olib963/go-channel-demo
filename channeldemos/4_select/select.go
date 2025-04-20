@@ -51,6 +51,29 @@ func main() {
 	willNeverWin := make(chan int)
 	race(ctx.Done(), willNeverWin)
 
+	// You can also use select to race _writing_ to channels or even combine the two:
+	write := make(chan int)
+	read := make(chan int)
+	go func() {
+		time.Sleep(2 * time.Second)
+		read <- 1
+		time.Sleep(2 * time.Second)
+		<-write
+	}()
+
+	more := true
+	for more {
+		select {
+		case v := <-read:
+			fmt.Printf("Received %d\n", v)
+		case write <- 10:
+			println("Wrote to write to channel")
+			more = false
+		default:
+			println("Could not read or write")
+			time.Sleep(1 * time.Second)
+		}
+	}
 }
 
 // Side note: we can use the `<-chan A` type to indicate that a function only reads from a channel.
